@@ -17,6 +17,9 @@ var BLOCK_SPACE = DIVISION_X * ( BLOCK_SPACE_PER / 100 ); // ブロック毎に�
 var BLOCK_WIDTH = DIVISION_X - BLOCK_SPACE;
 var BLOCK_HEIGHT = DIVISION_Y - BLOCK_SPACE;
 
+var BALL_WIDTH = 20;
+var BALL_HEIGHT = 20;
+
 // windowの読み込み完了時に
 window.onload = function(){
 	// Gameオブジェクトの宣言
@@ -61,6 +64,19 @@ window.onload = function(){
 		}
 	}
 
+	// ブロックを壊すボールの描画
+	var ball = new Sprite(BALL_WIDTH,BALL_HEIGHT);
+	// 円塗りつぶし描画
+	var surface = new Surface(BALL_WIDTH , BALL_HEIGHT); // サーフェス生成
+	surface.context.beginPath();
+	surface.context.arc(10, 10, 10, 0, Math.PI*2, false);
+	surface.context.fillStyle = "yellow";
+	surface.context.fill();
+
+	ball.image = surface;
+	ball.x = GAME_WIDTH / 2 - BALL_WIDTH / 2;
+	ball.y = GAME_HEIGHT / 2;
+
 	game.onload = function(){
 		// rootScene デフォルトで設定されるシーン
 		var scene = game.rootScene;
@@ -73,6 +89,9 @@ window.onload = function(){
 				scene.addChild(blocks[y][x]);
 			}
 		}
+
+		scene.addChild(ball);
+
 		state = 0;
 
 		game.onenterframe = function(){
