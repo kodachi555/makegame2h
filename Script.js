@@ -6,9 +6,9 @@ enchant();
 var GAME_WIDTH = 400;
 var GAME_HEIGHT = 500;
 // ブロックの大きさの設定
-var DEVIDE_X = 5; // ブロックのX方向の分割数
-var DEVIDE_Y = 4;
-var DIVISION_X = GAME_WIDTH / DEVIDE_X; // X軸方向に分割したときの幅
+var DIVIDE_X = 5; // ブロックのX方向の分割数
+var DIVIDE_Y = 4;
+var DIVISION_X = GAME_WIDTH / DIVIDE_X; // X軸方向に分割したときの幅
 var DIVISION_Y = 30; // Y軸方向に分割したときの幅
 
 var BLOCK_SPACE_PER = 5; // ブロック毎に空ける隙間 %
@@ -47,10 +47,10 @@ window.onload = function(){
 	// ここでプレロード的に使ってもちゃんと動く
 
 	// ブロックのスプライトオブジェクトを複数生成する
-	var blocks = new Array(DEVIDE_Y);
-	for(var y = 0; y < DEVIDE_Y; y++){
-		blocks[y] = new Array(DEVIDE_X);
-		for( var x = 0; x < DEVIDE_X; x++){
+	var blocks = new Array(DIVIDE_Y);
+	for(var y = 0; y < DIVIDE_Y; y++){
+		blocks[y] = new Array(DIVIDE_X);
+		for( var x = 0; x < DIVIDE_X; x++){
 			blocks[y][x] = new Sprite(BLOCK_WIDTH , BLOCK_HEIGHT);
 			// イメージとして読み込む
 			blocks[y][x].image = surface;
@@ -66,8 +66,8 @@ window.onload = function(){
 		var scene = game.rootScene;
 		scene.backgroundColor = "black";
 		// シーンに追加 多次元でforEachの使い方がわからない
-		for(var y = 0; y < DEVIDE_Y; y++){
-			for( var x = 0; x < DEVIDE_X; x++){
+		for(var y = 0; y < DIVIDE_Y; y++){
+			for( var x = 0; x < DIVIDE_X; x++){
 				// かっこ内にx , y の順番で配置場所を指定
 				// blocks[y][x].moveTo(posX , posY);
 				scene.addChild(blocks[y][x]);
