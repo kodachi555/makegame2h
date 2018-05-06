@@ -61,17 +61,20 @@ window.onload = function(){
 	// ここでプレロード的に使ってもちゃんと動く
 
 	// ブロックのスプライトオブジェクトを複数生成する
-	var blocks = new Array(DIVIDE_Y);
+	// グループ化オブジェクトを使ってみる
+	var blockGroup = new Group();
+
 	for(var y = 0; y < DIVIDE_Y; y++){
-		blocks[y] = new Array(DIVIDE_X);
 		for( var x = 0; x < DIVIDE_X; x++){
-			blocks[y][x] = new Sprite(BLOCK_WIDTH , BLOCK_HEIGHT);
+			var block = new Sprite(BLOCK_WIDTH , BLOCK_HEIGHT);
 			// イメージとして読み込む
-			blocks[y][x].image = surface;
+			block.image = surface;
 			var posX = (DIVISION_X * x) + (BLOCK_SPACE / 2);
 			var posY = (DIVISION_Y * y) + (BLOCK_SPACE / 2);
-			blocks[y][x].x = posX;
-			blocks[y][x].y = posY;
+			block.x = posX;
+			block.y = posY;
+			// ブロックのグループに追加
+			blockGroup.addChild(block);
 		}
 	}
 
@@ -112,36 +115,44 @@ window.onload = function(){
 	surface.context.fillStyle = "pink";
 	surface.context.fillRect(0,0,SHOOTER_WIDTH,SHOOTER_HEIGHT);
 
-	var shooters = new Array(SHOOTER_DIVIDE);
+	// シューターグループ
+	var shooterGroup = new Group();
 	for(var x = 0; x < SHOOTER_DIVIDE; x++){
-		shooters[x] = new Sprite(SHOOTER_WIDTH,SHOOTER_HEIGHT);
+		var shooter = new Sprite(SHOOTER_WIDTH,SHOOTER_HEIGHT);
 		// イメージとして読み込む
-		shooters[x].image = surface;
+		shooter.image = surface;
 		posX = (SHOOTER_DIVISION_X * x) + (BLOCK_SPACE / 2);
 		posY = GAME_HEIGHT - SHOOTER_DIVISION_Y + (BLOCK_SPACE / 2);
 		// var posY = GAME_HEIGHT;
-		shooters[x].x = posX;
-		shooters[x].y = posY;
+		shooter.x = posX;
+		shooter.y = posY;
+
+		// ブロックのグループに追加
+		shooterGroup.addChild(shooter);
 	}
 
 	game.onload = function(){
 		// rootScene デフォルトで設定されるシーン
 		var scene = game.rootScene;
 		scene.backgroundColor = "black";
-		// シーンに追加 多次元でforEachの使い方がわからない
-		for(var y = 0; y < DIVIDE_Y; y++){
-			for( var x = 0; x < DIVIDE_X; x++){
-				// かっこ内にx , y の順番で配置場所を指定
-				// blocks[y][x].moveTo(posX , posY);
-				scene.addChild(blocks[y][x]);
-			}
-		}
+
+		scene.addChild(blockGroup);
 
 		scene.addChild(ball);
 		scene.addChild(bar);
 
-		shooters.forEach(function(shooter){
-			scene.addChild(shooter);
+		scene.addChild(shooterGroup);
+		// このやり方だとグループ全体として読まれ、結果はどれを押しても0だった
+		// shooterGroup.addEventListener('ontouchstart',function(){
+		// 	console.log(this.x);
+		// });
+
+		// グループの要素それぞれにアクセスするにはchildNodesを使ってforEach
+		shooterGroup.childNodes.forEach(function(shooter){
+			shooter.ontouchstart=function(){
+				// forEachを使ってなんとかテストログ出力できた
+				console.log(this.x);
+			};
 		});
 
 		state = 0;
