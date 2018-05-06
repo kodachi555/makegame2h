@@ -20,6 +20,17 @@ var BLOCK_HEIGHT = DIVISION_Y - BLOCK_SPACE;
 var BALL_WIDTH = 20;
 var BALL_HEIGHT = 20;
 
+// バーは半円を半円で切り抜いた三日月の形
+var BAR_RADIUS = 10;
+var BAR_WIDTH = BAR_RADIUS * 2;
+var BAR_HEIGHT = BAR_RADIUS;
+
+var SHOOTER_DIVIDE = 5;
+var SHOOTER_DIVISION_X = GAME_WIDTH / SHOOTER_DIVIDE;
+var SHOOTER_DIVISION_Y = 40;
+var SHOOTER_WIDTH = SHOOTER_DIVISION_X - BLOCK_SPACE;
+var SHOOTER_HEIGHT = SHOOTER_DIVISION_Y - BLOCK_SPACE;
+
 // windowの読み込み完了時に
 window.onload = function(){
 	// Gameオブジェクトの宣言
@@ -77,6 +88,42 @@ window.onload = function(){
 	ball.x = GAME_WIDTH / 2 - BALL_WIDTH / 2;
 	ball.y = GAME_HEIGHT / 2;
 
+
+	// ボールを打ち返すバーの描画
+	var bar = new Sprite(BAR_WIDTH,BAR_HEIGHT);
+	var surface = new Surface(BAR_WIDTH,BAR_HEIGHT);
+	surface.context.beginPath();
+	surface.context.arc(BAR_WIDTH / 2,BAR_HEIGHT,BAR_RADIUS,Math.PI,Math.PI * 2,false);
+	surface.context.fillStyle = "red";
+	surface.context.fill();
+
+	surface.context.beginPath();
+	surface.context.arc(BAR_WIDTH / 2,BAR_HEIGHT * 3 / 2 ,BAR_RADIUS,Math.PI,Math.PI * 2,false);
+	surface.context.fillStyle = "black";
+	surface.context.fill();
+
+	bar.image = surface;
+	bar.x = GAME_WIDTH / 2 - BAR_WIDTH / 2;
+	bar.y = GAME_HEIGHT - SHOOTER_DIVISION_Y - BAR_HEIGHT;
+	// bar.y = 400;
+
+	// バーを打ち出すシューターの描画
+	var surface = new Surface(SHOOTER_WIDTH,SHOOTER_HEIGHT);
+	surface.context.fillStyle = "pink";
+	surface.context.fillRect(0,0,SHOOTER_WIDTH,SHOOTER_HEIGHT);
+
+	var shooters = new Array(SHOOTER_DIVIDE);
+	for(var x = 0; x < SHOOTER_DIVIDE; x++){
+		shooters[x] = new Sprite(SHOOTER_WIDTH,SHOOTER_HEIGHT);
+		// イメージとして読み込む
+		shooters[x].image = surface;
+		posX = (SHOOTER_DIVISION_X * x) + (BLOCK_SPACE / 2);
+		posY = GAME_HEIGHT - SHOOTER_DIVISION_Y + (BLOCK_SPACE / 2);
+		// var posY = GAME_HEIGHT;
+		shooters[x].x = posX;
+		shooters[x].y = posY;
+	}
+
 	game.onload = function(){
 		// rootScene デフォルトで設定されるシーン
 		var scene = game.rootScene;
@@ -91,6 +138,11 @@ window.onload = function(){
 		}
 
 		scene.addChild(ball);
+		scene.addChild(bar);
+
+		shooters.forEach(function(shooter){
+			scene.addChild(shooter);
+		});
 
 		state = 0;
 
