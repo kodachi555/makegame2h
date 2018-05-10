@@ -21,7 +21,7 @@ var BALL_WIDTH = 20;
 var BALL_HEIGHT = 20;
 
 // バーは半円を半円で切り抜いた三日月の形
-var BAR_RADIUS = 10;
+var BAR_RADIUS = 20;
 var BAR_WIDTH = BAR_RADIUS * 2;
 var BAR_HEIGHT = BAR_RADIUS;
 
@@ -30,6 +30,9 @@ var SHOOTER_DIVISION_X = GAME_WIDTH / SHOOTER_DIVIDE;
 var SHOOTER_DIVISION_Y = 40;
 var SHOOTER_WIDTH = SHOOTER_DIVISION_X - BLOCK_SPACE;
 var SHOOTER_HEIGHT = SHOOTER_DIVISION_Y - BLOCK_SPACE;
+
+var DEADLINE_POSITION = 420;
+var DEADLINE_HEIGHT = 10;
 
 // windowの読み込み完了時に
 window.onload = function(){
@@ -93,7 +96,6 @@ window.onload = function(){
 
 
 	// ボールを打ち返すバーの描画
-	var bar = new Sprite(BAR_WIDTH,BAR_HEIGHT);
 	var surface = new Surface(BAR_WIDTH,BAR_HEIGHT);
 	surface.context.beginPath();
 	surface.context.arc(BAR_WIDTH / 2,BAR_HEIGHT,BAR_RADIUS,Math.PI,Math.PI * 2,false);
@@ -105,10 +107,17 @@ window.onload = function(){
 	surface.context.fillStyle = "black";
 	surface.context.fill();
 
-	bar.image = surface;
-	bar.x = GAME_WIDTH / 2 - BAR_WIDTH / 2;
-	bar.y = GAME_HEIGHT - SHOOTER_DIVISION_Y - BAR_HEIGHT;
-	// bar.y = 400;
+	var barGroup = new Group();
+	for(var x = 0; x < SHOOTER_DIVIDE; x++){
+		var bar = new Sprite(BAR_WIDTH,BAR_HEIGHT);
+		bar.image = surface;
+		posX = (SHOOTER_DIVISION_X * (x+1)) - SHOOTER_DIVISION_X/2 - BAR_WIDTH/2;
+		posY = GAME_HEIGHT - SHOOTER_DIVISION_Y - BAR_HEIGHT - (BLOCK_SPACE / 2);
+
+		bar.x = posX;
+		bar.y = posY;
+		barGroup.addChild(bar);
+	}
 
 	// バーを打ち出すシューターの描画
 	var surface = new Surface(SHOOTER_WIDTH,SHOOTER_HEIGHT);
@@ -119,7 +128,6 @@ window.onload = function(){
 	var shooterGroup = new Group();
 	for(var x = 0; x < SHOOTER_DIVIDE; x++){
 		var shooter = new Sprite(SHOOTER_WIDTH,SHOOTER_HEIGHT);
-		// イメージとして読み込む
 		shooter.image = surface;
 		posX = (SHOOTER_DIVISION_X * x) + (BLOCK_SPACE / 2);
 		posY = GAME_HEIGHT - SHOOTER_DIVISION_Y + (BLOCK_SPACE / 2);
@@ -131,6 +139,14 @@ window.onload = function(){
 		shooterGroup.addChild(shooter);
 	}
 
+	// デッドラインの描画
+	var surface = new Surface(GAME_WIDTH,DEADLINE_HEIGHT);
+	var deadline = new Sprite(GAME_WIDTH,DEADLINE_HEIGHT);
+	surface.context.fillStyle = "blue"
+	surface.context.fillRect(0,0,GAME_WIDTH,DEADLINE_HEIGHT);
+	deadline.image = surface;
+	deadline.y = DEADLINE_POSITION;
+
 	game.onload = function(){
 		// rootScene デフォルトで設定されるシーン
 		var scene = game.rootScene;
@@ -139,39 +155,127 @@ window.onload = function(){
 		scene.addChild(blockGroup);
 
 		scene.addChild(ball);
-		scene.addChild(bar);
+		// scene.addChild(barGroup);
+		scene.addChild(barGroup)
+		// scene.addChild(bars[][0]);
 
+		// scene.addChild(shooterGroup);
 		scene.addChild(shooterGroup);
 		// このやり方だとグループ全体として読まれ、結果はどれを押しても0だった
 		// shooterGroup.addEventListener('ontouchstart',function(){
 		// 	console.log(this.x);
 		// });
+		scene.addChild(deadline);
 
+		var ballDirection_X = 1;
+		var ballSpeed_X = 5;
+		var ballDirection_Y = -1;
+		var ballSpeed_Y = 5;
+		var barSpeed = 15;
+		// console.log(barGroup.childNodes[0].y);
+		var barDefault = barGroup.childNodes[0].y;
+		var barShot = new Array(SHOOTER_DIVIDE);
+		for (var i = 0; i < barShot.length; i++) {
+			barShot[i] = 0;
+		};
 		// グループの要素それぞれにアクセスするにはchildNodesを使ってforEach
-		shooterGroup.childNodes.forEach(function(shooter){
-			shooter.ontouchstart=function(){
-				// forEachを使ってなんとかテストログ出力できた
-				console.log(this.x);
-			};
+		// インデックスを利用するにはfunction内に複数書く
+		// a.forEach(function(val,index,ar){  ⇦ 第一引数が値、第二引数がインデックス、第三引数にforEachされている配列
+		shooterGroup.childNodes.forEach(function(shooter,index){
+			shooter.addEventListener("enterframe",function(){
+				shooter.ontouchstart=function(){
+					shooter.y -= BLOCK_SPACE * 2;
+				};
+				shooter.ontouchend=function(){
+					shooter.y += BLOCK_SPACE * 2;
+				};
+			});
 		});
 
-		state = 0;
+		barGroup.childNodes.forEach(function(bar,index,bars){
+			bar.addEventListener("enterframe",function(){
+				bars[index].y -= barSpeed * barShot[index];
+				if(bar.intersect(shooterGroup.childNodes[index])){
+					// console.log(bars[index]);
+					barShot[index] = 1;
+				};
+				if(bars[index].y <= 0){
+					barShot[index] = 0;
+					bars[index].y = barDefault;
+				};
+				if(bars[index].intersect(ball)){
+					barShot[index] = 0;
+					bars[index].y = barDefault;
+					ballDirection_Y *= -1;
+				};
+			});
+		});
 
+		// グループの要素それぞれにアクセスするにはchildNodesを使ってforEach
+		blockGroup.childNodes.forEach(function(block){
+			block.addEventListener("enterframe",function(){
+
+				// ボールとの当たり判定
+				if(block.intersect(ball)){
+					blockGroup.removeChild(block);
+					console.log(blockGroup.childNodes.length);
+					// ブロックが全て消えたとき
+					if(blockGroup.childNodes.length == 0){
+						game.popScene(); // デフォルトシーンを外す
+						game.pushScene(SCENE_CLEAR); // シーンをクリア画面に
+					};
+					var deltaX = ball.x - (ballDirection_X * ballSpeed_X);
+					var deltaY = ball.y - (ballDirection_Y * ballSpeed_Y);
+					if(deltaX + BALL_WIDTH < block.x || deltaX > block.x + BLOCK_WIDTH){
+						ballDirection_X *= -1;
+					};
+					if(deltaY + BALL_HEIGHT < block.y || deltaY > block.y + BLOCK_HEIGHT){
+						ballDirection_Y *= -1;
+					};
+				};
+			});
+		});
+
+		//ゲーム終了時の表示文字
+		var GameOverText=new Label(); 					//テキストはLabelクラス
+		GameOverText.font = "20px Meiryo";				//フォントはメイリオ 20px 変えたかったらググってくれ
+		GameOverText.color = 'rgba(255,255,255,1)';		//色　RGB+透明度　今回は白
+		GameOverText.width=400;							//横幅指定　今回画面サイズ400pxなので、width:400pxだと折り返して二行目表示してくれる
+		GameOverText.moveTo(0,30);						//移動位置指定
+
+		//クリア画面
+		SCENE_CLEAR = new Scene();
+		SCENE_CLEAR.backgroundColor="black";
+		GameOverText.text="Game Clear!";
+		SCENE_CLEAR.addChild(GameOverText);						//シーンにこの画像を埋め込む
+
+		// ミス画面
+		SCENE_MISS = new Scene();
+		SCENE_MISS.backgroundColor="blue"
+		GameOverText.text="You Missed!"
+		SCENE_MISS.addChild(GameOverText);
+
+		// 常に動いてるボールの制御
 		game.onenterframe = function(){
-			// if(block.x < 400){
-			// 	block.x += 3;
-			// 	// sin関数を使ってY軸を移動。波を描いて進む
-			// 	block.y=100+Math.sin(block.x/40)*100;
-			// } else {
-			// 	block.x = -20;
-			// }
-			// switch (state) {
-			// 	case 0:
-			// 		block.x = BLOCK_SPACE;
-			// 		block.y = BLOCK_SPACE;
-			// 		break;
-			// 	default:
-			// }
+			ball.x += ballDirection_X * ballSpeed_X;
+			ball.y += ballDirection_Y * ballSpeed_Y;
+			// 壁との当たり判定
+			if(ball.x == GAME_WIDTH - BALL_WIDTH){
+				ballDirection_X = -1;
+			};
+			if(ball.x == 0){
+				ballDirection_X = 1;
+			};
+			if(ball.y == 0){
+				ballDirection_Y = 1;
+			};
+			// デッドラインと接触
+			if(ball.y == DEADLINE_POSITION - BALL_HEIGHT){
+				// ballDirection_Y = -1;
+				game.popScene();
+				game.pushScene(SCENE_MISS);
+			};
+
 		};
 
 	};
