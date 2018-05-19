@@ -184,21 +184,24 @@ window.onload = function(){
 		shooterGroup.childNodes.forEach(function(shooter,index){
 			shooter.addEventListener("enterframe",function(){
 				shooter.ontouchstart=function(){
-					shooter.y -= BLOCK_SPACE * 2;
+					// shooter.y -= BLOCK_SPACE * 2;
+					barShot[index] = 1;
 				};
-				shooter.ontouchend=function(){
-					shooter.y += BLOCK_SPACE * 2;
-				};
+				// shooter.ontouchend=function(){
+				// 	shooter.y += BLOCK_SPACE * 2;
+				// };
 			});
 		});
 
 		barGroup.childNodes.forEach(function(bar,index,bars){
 			bar.addEventListener("enterframe",function(){
 				bars[index].y -= barSpeed * barShot[index];
-				if(bar.intersect(shooterGroup.childNodes[index])){
-					// console.log(bars[index]);
-					barShot[index] = 1;
-				};
+				// シューターに当たると射出→スマホの時不具合があるので廃止
+				// if(bar.intersect(shooterGroup.childNodes[index])){
+				// 	// console.log(bars[index]);
+				// 	barShot[index] = 1;
+				// };
+
 				if(bars[index].y <= 0){
 					barShot[index] = 0;
 					bars[index].y = barDefault;
